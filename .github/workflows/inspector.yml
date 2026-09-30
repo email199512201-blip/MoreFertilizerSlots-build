@@ -1,0 +1,20 @@
+name: Build Inspector
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'Inspector/**'
+      - '.github/workflows/inspector.yml'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet publish Inspector/Inspector.csproj -c Release -r linux-x64 --self-contained true /p:PublishSingleFile=true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AssemblyInspector-linux-x64
+          path: Inspector/bin/Release/net8.0/linux-x64/publish/Inspector
