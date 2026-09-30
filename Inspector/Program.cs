@@ -18,7 +18,7 @@ foreach (var typeName in new[]{"UIGardenBedWindow","UIGardenBedSlot","GardenInte
 var win=asm.MainModule.Types.FirstOrDefault(x=>x.Name=="UIGardenBedWindow");
 if(win!=null)
 {
-    foreach(var mn in new[]{"UpdatePerks","DrawFertilizerSlot","DrawSeedSlot","UpdateSeedItemCell"})
+    foreach(var mn in new[]{"Init","SetData","Redraw","UpdateInputItem","UpdatePerks","UpdatePlantControls","UpdateSeedItemCell","TestDraw"})
     {
         var m=win.Methods.FirstOrDefault(x=>x.Name==mn);
         if(m?.HasBody!=true) continue;
