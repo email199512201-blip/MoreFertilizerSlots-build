@@ -16,7 +16,7 @@ namespace MoreFertilizerSlots
     {
         public const string PluginGuid = "com.gk2.morefertilizerslots";
         public const string PluginName = "More Fertilizer Slots";
-        public const string PluginVersion = "0.2.1";
+        public const string PluginVersion = "0.2.2";
 
         internal const string FertilizerSlotsKey = "g_garden_fertilizer_slots";
         internal const int VanillaMaxSlots = 2;
@@ -185,7 +185,7 @@ namespace MoreFertilizerSlots
         private static FieldInfo _plantButtonField;
         private static FieldInfo _slotsObjField;
 
-        private static readonly Dictionary<int, Vector2> OriginalPositions = new Dictionary<int, Vector2>();
+        private static readonly Dictionary<int, Vector3> OriginalPositions = new Dictionary<int, Vector3>();
         private static readonly Dictionary<int, Vector3> OriginalScales = new Dictionary<int, Vector3>();
 
         private static bool _warnedMissingField;
@@ -300,9 +300,9 @@ namespace MoreFertilizerSlots
                 float slotW = Mathf.Max(1f, rects[0].rect.width);
                 float slotH = Mathf.Max(1f, rects[0].rect.height);
 
-                Vector2 p0 = GetOriginalPosition(rects[0], 0);
-                Vector2 p1 = GetOriginalPosition(rects[1], 1);
-                Vector2 p2 = GetOriginalPosition(rects[2], 2);
+                Vector3 p0 = GetOriginalPosition(rects[0]);
+                Vector3 p1 = GetOriginalPosition(rects[1]);
+                Vector3 p2 = GetOriginalPosition(rects[2]);
 
                 float originalStep = Mathf.Abs((p2.x - p0.x) * 0.5f);
                 if (originalStep < 1f)
@@ -372,9 +372,11 @@ namespace MoreFertilizerSlots
                     {
                         RectTransform rect = rects[index];
                         rect.localScale = new Vector3(scale, scale, rect.localScale.z);
-                        rect.anchoredPosition = new Vector2(
+                        Vector3 currentLocal = rect.localPosition;
+                        rect.localPosition = new Vector3(
                             rowStartX + col * (scaledW + scaledGapX),
-                            y);
+                            y,
+                            currentLocal.z);
                     }
                 }
             }
@@ -517,18 +519,18 @@ namespace MoreFertilizerSlots
 
                 int id = rect.GetInstanceID();
                 if (!OriginalPositions.ContainsKey(id))
-                    OriginalPositions[id] = rect.anchoredPosition;
+                    OriginalPositions[id] = rect.localPosition;
                 if (!OriginalScales.ContainsKey(id))
                     OriginalScales[id] = rect.localScale;
             }
         }
 
-        private static Vector2 GetOriginalPosition(RectTransform rect, int fallbackIndex)
+        private static Vector3 GetOriginalPosition(RectTransform rect)
         {
-            Vector2 value;
+            Vector3 value;
             if (rect != null && OriginalPositions.TryGetValue(rect.GetInstanceID(), out value))
                 return value;
-            return rect == null ? Vector2.zero : rect.anchoredPosition;
+            return rect == null ? Vector3.zero : rect.localPosition;
         }
 
         private static void RestoreOriginalSlots(IList widgets)
@@ -540,10 +542,10 @@ namespace MoreFertilizerSlots
                 if (rect == null)
                     continue;
 
-                Vector2 pos;
+                Vector3 pos;
                 Vector3 scale;
                 if (OriginalPositions.TryGetValue(rect.GetInstanceID(), out pos))
-                    rect.anchoredPosition = pos;
+                    rect.localPosition = pos;
                 if (OriginalScales.TryGetValue(rect.GetInstanceID(), out scale))
                     rect.localScale = scale;
             }
