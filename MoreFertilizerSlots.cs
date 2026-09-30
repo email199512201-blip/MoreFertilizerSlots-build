@@ -16,7 +16,7 @@ namespace MoreFertilizerSlots
     {
         public const string PluginGuid = "com.gk2.morefertilizerslots";
         public const string PluginName = "More Fertilizer Slots";
-        public const string PluginVersion = "0.2.3";
+        public const string PluginVersion = "0.2.4";
 
         internal const string FertilizerSlotsKey = "g_garden_fertilizer_slots";
         internal const int VanillaMaxSlots = 2;
@@ -279,42 +279,59 @@ namespace MoreFertilizerSlots
                 if (r0 == null || r1 == null || r2 == null)
                     return;
 
-                // These are the positions AFTER the vanilla LayoutGroup has finished.
-                // We never change them.
-                Vector2 p0 = r0.anchoredPosition;
-                Vector2 p1 = r1.anchoredPosition;
-                Vector2 p2 = r2.anchoredPosition;
+                // Let the game's original LayoutGroup own the first three slots completely.
+                // Read their FINAL world positions and use those as a visual ruler.
+                Vector3 w0 = r0.position;
+                Vector3 w1 = r1.position;
+                Vector3 w2 = r2.position;
 
-                float centerX = (p0.x + p1.x + p2.x) / 3f;
-                float slotHeight = Mathf.Max(r0.rect.height, Mathf.Max(r1.rect.height, r2.rect.height));
-                if (slotHeight < 1f)
-                    slotHeight = 70f;
+                Vector3 step = (w2 - w0) * 0.5f;
+                Vector3 rowCenter = (w0 + w1 + w2) / 3f;
 
-                float rowStep = slotHeight + VerticalGap;
-                float row2Y = (p0.y + p1.y + p2.y) / 3f - rowStep;
-                float row3Y = row2Y - rowStep;
+                // Derive one visual slot-height in world space from the actual rendered rectangle.
+                Vector3[] corners = new Vector3[4];
+                r0.GetWorldCorners(corners);
+                Vector3 down = corners[0] - corners[1];
+                float renderedHeight = down.magnitude;
+                if (renderedHeight < 0.0001f)
+                    down = Vector3.down;
+                else
+                    down /= renderedHeight;
 
-                // Use only the original three-column footprint.
-                // Therefore extra fertilizer slots can NEVER extend farther right
-                // than the vanilla fertilizer area and cannot cover the seed/plant column.
-                if (desired == 4)
+                // One compact second row only. This keeps every configuration (4-7)
+                // inside the window vertically.
+                float rowGap = renderedHeight * 0.12f;
+                Vector3 lowerCenter = rowCenter + down * (renderedHeight + rowGap);
+
+                int extra = desired - 3;
+
+                // All extra slots stay in ONE lower row.
+                // For seven total slots, the four lower slots use:
+                //   one extrapolated column to the left + the three vanilla fertilizer columns.
+                // That leftmost column occupies the empty area below the crop/seed preview, while
+                // the rightmost column never extends beyond vanilla slot #3. Therefore the planting
+                // controls on the right cannot be covered.
+                if (extra == 1)
                 {
-                    Place(widgets, 3, centerX, row2Y, r2.localScale);
+                    PlaceWorld(widgets, 3, lowerCenter);
                 }
-                else if (desired == 5)
+                else if (extra == 2)
                 {
-                    Place(widgets, 3, (p0.x + p1.x) * 0.5f, row2Y, r2.localScale);
-                    Place(widgets, 4, (p1.x + p2.x) * 0.5f, row2Y, r2.localScale);
+                    PlaceWorld(widgets, 3, lowerCenter - step * 0.5f);
+                    PlaceWorld(widgets, 4, lowerCenter + step * 0.5f);
+                }
+                else if (extra == 3)
+                {
+                    PlaceWorld(widgets, 3, lowerCenter - step);
+                    PlaceWorld(widgets, 4, lowerCenter);
+                    PlaceWorld(widgets, 5, lowerCenter + step);
                 }
                 else
                 {
-                    // 6 and 7: a complete second row aligned exactly below vanilla slots.
-                    Place(widgets, 3, p0.x, row2Y, r2.localScale);
-                    Place(widgets, 4, p1.x, row2Y, r2.localScale);
-                    Place(widgets, 5, p2.x, row2Y, r2.localScale);
-
-                    if (desired >= 7)
-                        Place(widgets, 6, centerX, row3Y, r2.localScale);
+                    PlaceWorld(widgets, 3, lowerCenter - step * 2f);
+                    PlaceWorld(widgets, 4, lowerCenter - step);
+                    PlaceWorld(widgets, 5, lowerCenter);
+                    PlaceWorld(widgets, 6, lowerCenter + step);
                 }
             }
             catch (Exception ex)
@@ -330,7 +347,7 @@ namespace MoreFertilizerSlots
             return component == null ? null : component.transform as RectTransform;
         }
 
-        private static void Place(IList widgets, int index, float x, float y, Vector3 scale)
+        private static void PlaceWorld(IList widgets, int index, Vector3 worldPosition)
         {
             if (index < 0 || index >= widgets.Count)
                 return;
@@ -340,8 +357,11 @@ namespace MoreFertilizerSlots
                 return;
 
             SetIgnoreParentLayout(rect.gameObject, true);
-            rect.localScale = scale;
-            rect.anchoredPosition = new Vector2(x, y);
+
+            // World-space placement deliberately avoids RectTransform anchor/pivot differences.
+            // The position is derived from the already-correct vanilla slots, so it scales with
+            // resolution and Canvas scaling automatically.
+            rect.position = worldPosition;
         }
 
         private static void SetIgnoreParentLayout(GameObject obj, bool ignore)
