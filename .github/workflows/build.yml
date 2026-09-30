@@ -1,0 +1,27 @@
+name: Build More Fertilizer Slots
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore MoreFertilizerSlots.csproj --configfile NuGet.Config
+      - name: Build
+        run: dotnet build MoreFertilizerSlots.csproj -c Release --no-restore
+      - name: Stage plugin
+        run: |
+          mkdir -p artifact/MoreFertilizerSlots
+          cp bin/Release/netstandard2.1/MoreFertilizerSlots.dll artifact/MoreFertilizerSlots/
+      - name: Upload DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: MoreFertilizerSlots
+          path: artifact/MoreFertilizerSlots/MoreFertilizerSlots.dll
+          if-no-files-found: error
