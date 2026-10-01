@@ -43,5 +43,6 @@ DumpType("GardenInteractionHandler", new[]{
 DumpType("CraftParamsData", new[]{
     "GetWgoPerksCraftMasteryBonusValue","GetWgoPerksCraftStartTicksBonusValue","GetWgoPerksCraftAddTotalProgressTicks"
 });
-DumpType("WgoData");
+DumpType("WgoData", new[]{"AddPerk","RemovePerk","HasPerk","get_ActivePerks"});
+DumpType("UIGardenBedWindowData", new[]{"get_GardenPerks","get_IsGrowing"});
 DumpType("PerkData");
