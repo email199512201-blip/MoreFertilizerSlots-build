@@ -14,5 +14,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Inspector/**/*.cs" />
+    <Compile Remove="InfiniteFishingResources/**/*.cs" />
   </ItemGroup>
 </Project>
