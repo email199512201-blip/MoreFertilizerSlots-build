@@ -1,0 +1,30 @@
+name: Build Infinite Fishing Resources
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'InfiniteFishingResources/**'
+      - '.github/workflows/infinite-fishing.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore InfiniteFishingResources/InfiniteFishingResources.csproj --configfile NuGet.Config
+      - name: Build
+        run: dotnet build InfiniteFishingResources/InfiniteFishingResources.csproj -c Release --no-restore
+      - name: Stage plugin
+        run: |
+          mkdir -p artifact/InfiniteFishingResources
+          cp InfiniteFishingResources/bin/Release/netstandard2.1/InfiniteFishingResources.dll artifact/InfiniteFishingResources/
+      - name: Upload DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: InfiniteFishingResources
+          path: artifact/InfiniteFishingResources/InfiniteFishingResources.dll
+          if-no-files-found: error
