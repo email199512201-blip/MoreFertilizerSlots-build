@@ -1,0 +1,30 @@
+name: Build Garden Worker Safety Fix
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'GardenWorkerSafetyFix/**'
+      - '.github/workflows/garden-worker-safety.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore GardenWorkerSafetyFix/GardenWorkerSafetyFix.csproj --configfile NuGet.Config
+      - name: Build
+        run: dotnet build GardenWorkerSafetyFix/GardenWorkerSafetyFix.csproj -c Release --no-restore
+      - name: Stage plugin
+        run: |
+          mkdir -p artifact/GardenWorkerSafetyFix
+          cp GardenWorkerSafetyFix/bin/Release/netstandard2.1/GardenWorkerSafetyFix.dll artifact/GardenWorkerSafetyFix/
+      - name: Upload DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: GardenWorkerSafetyFix
+          path: artifact/GardenWorkerSafetyFix/GardenWorkerSafetyFix.dll
+          if-no-files-found: error
