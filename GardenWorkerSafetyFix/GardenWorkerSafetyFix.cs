@@ -313,6 +313,21 @@ namespace GardenWorkerSafetyFix
             return null;
         }
 
+        private static MethodInfo MForArg(Type t, string name, object arg)
+        {
+            if (t == null) return null;
+            Type argType = arg == null ? null : arg.GetType();
+            foreach (MethodInfo m in t.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                if (m.Name != name) continue;
+                ParameterInfo[] p = m.GetParameters();
+                if (p.Length != 1) continue;
+                if (arg == null || p[0].ParameterType.IsAssignableFrom(argType))
+                    return m;
+            }
+            return null;
+        }
+
         internal static object TryGetWorldData()
         {
             try
@@ -534,7 +549,7 @@ namespace GardenWorkerSafetyFix
             try
             {
                 if (world != null && stationGuid != null)
-                    station = M(world.GetType(), "GetWgoData", 1)?.Invoke(world, new object[] { stationGuid });
+                    station = MForArg(world.GetType(), "GetWgoData", stationGuid)?.Invoke(world, new object[] { stationGuid });
             }
             catch { }
 
